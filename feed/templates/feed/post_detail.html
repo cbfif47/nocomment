@@ -1,0 +1,19 @@
+{% extends 'feed/base.html' %}
+
+{% block content %}
+		<div class="post">
+			<h2><span class="glyphicon glyphicon-heart"></span>  <a href={{post.link}}>{{ post.name }}</a></h2>
+			<form method="POST" class="post-form">{% csrf_token %}
+        		{{ form.as_p }}
+        		<button type="submit" class="save btn btn-default">Save</button>
+    		</form>
+			{% for source in post.sources.all %}
+				<p>{{ source.name }}</p>
+			{% endfor %}
+			<div class="like_abuse_box">
+			  <p>Likes:<b id="like_heart">{{post.liked}}</b> ||
+			   <a class="like" href="/like/{{feed.id}}/">Like</a> | 
+			   <a class="abuse" href="/abuse/{{feed.id}}/">Abuse</a> || </p>
+			</div>
+		</div>
+{% endblock %}

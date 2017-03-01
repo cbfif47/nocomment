@@ -24,7 +24,10 @@ class Source(models.Model):
 	def __str__(self):
 		return self.name
 
-class PrePost(models.Model):
+
+
+class RawPost(models.Model):
+	author = models.ForeignKey('auth.User')
 	source = models.ForeignKey('source')
 	link = models.URLField()
 	name = models.TextField(default='')
@@ -36,6 +39,7 @@ class PrePost(models.Model):
 		return self.name
 
 class ScoredPost(models.Model):
+	author = models.ForeignKey('auth.User')
 	sources = models.ManyToManyField('source')
 	link = models.URLField()
 	name = models.TextField(default='')

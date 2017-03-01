@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Source, Post, PrePost, ScoredPost
+from .models import Source, Post, RawPost, ScoredPost
 
 admin.site.register(Source)
 admin.site.register(Post)
-admin.site.register(PrePost)
+admin.site.register(RawPost)
 admin.site.register(ScoredPost)
