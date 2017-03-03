@@ -53,7 +53,6 @@ def scorePosts(user):
 			newScoredPost = ScoredPost(
 				author = rawPost.author,
 				link = rawPost.link,
-				name = rawPost.name,
 				postType = rawPost.postType,
 				score = rawPost.source.score,
 				created_date = rawPost.created_date
@@ -75,21 +74,7 @@ def makePosts(user):
 	#grab posts that meet the threshold
 	scoredPosts = ScoredPost.objects.filter(score__gte=threshold)
 	for p in scoredPosts:
-		#check if we've already posted this one
-		existing = Post.objects.filter(link=p.link)
-		if not existing:
-			#make a list of the post sources, so we can add it later
-			postSources = list(s.id for s in p.sources.all())
-			newPost = Post(
-				author = p.author,
-				link = p.link,
-				name = p.name,
-				postType = 'Video',
-				created_date = p.created_date
-				)
-			newPost.save()
-			#add the sources
-			newPost.sources.add(*postSources)
+		Post.create(p)
 
 def post_like(request, pk):
 	post = Post.objects.get(pk=pk)
@@ -166,21 +151,11 @@ def process_feed(request):
 	noisey += catch_em_all('noisey')
 	slate += catch_em_all('slate')
 	stereogum += catch_em_all('stereogum')  
-	makeRawPosts(noisey,'Noisey')
-	makeRawPosts(slate,'Slate')
-	makeRawPosts(stereogum,'Stereogum')   
+	RawPost.create_batch(noisey,'Noisey')
+	RawPost.create_batch(slate,'Slate')
+	RawPost.create_batch(stereogum,'Stereogum')   
 	messages.success(request, 'Feeds processed!')
 	return redirect('post_list')   
 
-def makeRawPosts(links,source):
-	linksource = Source.objects.get(name=source)
-	for link in links:
-		existing = RawPost.objects.filter(link=link, source=linksource)
-		if not existing:
-			newRaw = RawPost(
-				author = linksource.author,
-				source = linksource,
-				link = link)
-			newRaw.save()
 
 
