@@ -19,7 +19,7 @@ import ssl
 # Create your views here.
 def post_list(request):
 	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
-	paginator = Paginator(posts, 10)
+	paginator = Paginator(posts, 9)
 	page = request.GET.get('page',1)
 	try:
 		pagePosts = paginator.page(page)

@@ -5,7 +5,9 @@
 		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 		<link href="https://fonts.googleapis.com/css?family=Baloo" rel="stylesheet">
 		<link rel="stylesheet" href="{% static 'css/feed.css' %}">
-		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js" async defer></script>
+		<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script></script>
         <title>Feed</title>
     </head>
     <body>
@@ -13,17 +15,18 @@
             <h1><a href="{% url 'post_list' %}">no comment</a></h1>
         </div>
 
-        <div class="content container">
-    		<div class="row"></div>
-		        <div class="col-md-8">
-		        	{% for message in messages %}
-    					<div class="alert alert-{{ message.tags }}">{{ message }}</div>
-					{% endfor %}
-				<div class="col-md-8">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            {{ message }}
+        </div>
+    {% endfor %}
+
+        <div class="content container-fluid">
 		            {% block content %}
             		{% endblock %}
-		        </div>
-		    </div>
 		</div>
     </body>
 </html>
