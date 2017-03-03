@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, time
 from .models import Post, RawPost, Source, ScoredPost
 from .forms import PostLike
 from django.contrib import messages
+from django.core.paginator import Paginator
 
 #these are for scraping
 from lxml import html
@@ -18,19 +19,27 @@ import ssl
 # Create your views here.
 def post_list(request):
 	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
-	return render(request, 'feed/post_list.html', {'posts':posts})
+	paginator = Paginator(posts, 10)
+	page = request.GET.get('page',1)
+	try:
+		pagePosts = paginator.page(page)
+	except PageNotAnInteger:
+		pagePosts = paginator.page(1)
+	except EmptyPage:
+		pagePosts = paginator.page(paginator.num_pages)
+	return render(request, 'feed/post_list.html', {'posts': pagePosts})
 
 def refresh_posts(request):
-	makePrePosts()
+	#processFeeds()
 	scorePosts(1)
 	makePosts(1)
-	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
+	#posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
 	messages.success(request, 'Posts refreshed!')
 	return redirect('post_list')
 
 def scorePosts(user):
 	yesterday = timezone.now().date() - timedelta(1)
-	rawPosts = RawPost.objects.filter(source__author=user,created_date__gte=yesterday)   #need to maybe just make it yesterday, not today
+	rawPosts = RawPost.objects.all()  #need to maybe just make it yesterday, not today
 	for rawPost in rawPosts:
 		try:
 			#if we're already scoring it, increment the existing score
@@ -42,6 +51,7 @@ def scorePosts(user):
 		except ScoredPost.DoesNotExist:
 			#otherwise make a new scoredPost and increment the score
 			newScoredPost = ScoredPost(
+				author = rawPost.author,
 				link = rawPost.link,
 				name = rawPost.name,
 				postType = rawPost.postType,
@@ -63,7 +73,7 @@ def makePosts(user):
 	yesterday = timezone.now().date() - timedelta(1)
 
 	#grab posts that meet the threshold
-	scoredPosts = ScoredPost.objects.filter(author=user,created_date__gte=yesterday,score__gte=threshold)
+	scoredPosts = ScoredPost.objects.filter(score__gte=threshold)
 	for p in scoredPosts:
 		#check if we've already posted this one
 		existing = Post.objects.filter(link=p.link)
@@ -145,22 +155,32 @@ def catch_em_all(source):
         youtubes += find_youtubes(link)
     distinct = set()
     for youtube in youtubes:
-        if source not in youtube & 'user' not in youtube:    #make sure we're not adding its own channel
+        if source not in youtube:    #make sure we're not adding its own channel
             distinct.add(youtube)
     return distinct
 
-def makePrePosts():
+def process_feed(request):
 	noisey = []
 	slate = []
 	stereogum = []
 	noisey += catch_em_all('noisey')
 	slate += catch_em_all('slate')
-	stereogum += catch_em_all('stereogum')    
-	for noise in noisey:
-		newRaw = RawPost(
-			author = 1
-			source = 1
-			link = noise)
-		newRaw.save()
+	stereogum += catch_em_all('stereogum')  
+	makeRawPosts(noisey,'Noisey')
+	makeRawPosts(slate,'Slate')
+	makeRawPosts(stereogum,'Stereogum')   
+	messages.success(request, 'Feeds processed!')
+	return redirect('post_list')   
+
+def makeRawPosts(links,source):
+	linksource = Source.objects.get(name=source)
+	for link in links:
+		existing = RawPost.objects.filter(link=link, source=linksource)
+		if not existing:
+			newRaw = RawPost(
+				author = linksource.author,
+				source = linksource,
+				link = link)
+			newRaw.save()
 
 
