@@ -14,7 +14,7 @@ import requests
 import shelve
 import sys
 import feedparser
-import ssl
+import ssl 
 
 # Create your views here.
 def post_list(request):

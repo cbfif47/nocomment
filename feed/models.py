@@ -7,13 +7,12 @@ class Post(models.Model):
 	liked = models.BooleanField(default=False)
 	disliked = models.BooleanField(default=False)
 	postType = models.TextField(default='Video')
-	name = models.TextField(default='New Post')
 	sources = models.ManyToManyField('source')
 	created_date = models.DateTimeField(
 		default=timezone.now)
 
 	def __str__(self):
-		return self.name
+		return self.link[24:]    #parse out just the piece after youtube
 
 class Source(models.Model):
 	author = models.ForeignKey('auth.User')
@@ -30,24 +29,22 @@ class RawPost(models.Model):
 	author = models.ForeignKey('auth.User')
 	source = models.ForeignKey('source')
 	link = models.URLField()
-	name = models.TextField(default='')
 	postType = models.TextField(default='Video')
 	created_date = models.DateTimeField(
 		default=timezone.now)
 
 	def __str__(self):
-		return self.name
+		return self.link[24:]
 
 class ScoredPost(models.Model):
 	author = models.ForeignKey('auth.User')
 	sources = models.ManyToManyField('source')
 	link = models.URLField()
-	name = models.TextField(default='')
 	postType = models.TextField(default='Video')
 	score = models.IntegerField(default=0)
 	created_date = models.DateTimeField(
 		default=timezone.now)
 
 	def __str__(self):
-		return self.name		
+		return self.link	[24:]	
 	
