@@ -1,30 +1,29 @@
 {% load staticfiles %}
 <html>
     <head>
-    	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
 		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
-		<link href="//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+		<link href="https://fonts.googleapis.com/css?family=Baloo" rel="stylesheet">
 		<link rel="stylesheet" href="{% static 'css/feed.css' %}">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js" async defer></script>
         <title>Feed</title>
     </head>
     <body>
         <div class="page-header">
-            <h1><a href="{% url 'post_list' %}">Feed</a></h1>
+            <h1><a href="{% url 'post_list' %}">no comment</a></h1>
         </div>
 
         <div class="content container">
-    		<div class="row">
+    		<div class="row"></div>
 		        <div class="col-md-8">
+		        	{% for message in messages %}
+    					<div class="alert alert-{{ message.tags }}">{{ message }}</div>
+					{% endfor %}
+				<div class="col-md-8">
 		            {% block content %}
             		{% endblock %}
 		        </div>
 		    </div>
 		</div>
     </body>
-    $("a.like").bind("click", function(){
-    var link = $(this).attr("href");
-    $.get(link, function(data) {
-        $(this).parent("div").children('b#like_heart').html(data);
-    });
-});
 </html>

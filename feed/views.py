@@ -4,13 +4,19 @@ from django.db.models import Sum
 from datetime import datetime, timedelta, time
 from .models import Post, RawPost, Source, ScoredPost
 from .forms import PostLike
+from django.contrib import messages
 
 # Create your views here.
 def post_list(request):
+	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
+	return render(request, 'feed/post_list.html', {'posts':posts})
+
+def refresh_posts(request):
 	scorePosts(1)
 	makePosts(1)
-	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('created_date')
-	return render(request, 'feed/post_list.html', {'posts':posts})
+	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
+	messages.success(request, 'Posts refreshed!')
+	return redirect('post_list')
 
 def scorePosts(user):
 	yesterday = timezone.now().date() - timedelta(1)
