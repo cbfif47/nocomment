@@ -99,71 +99,11 @@ def post_like(request, pk):
 	return render(request, 'feed/post_detail.html', {'post':post, 'form':form})
 
 
-##### Here's how we get the vids
-
-def find_youtubes(address):
-    """finds any embedded youtube addresses on the page"""
-    page = requests.get(address)
-    output = set()
-    try:
-        tree = html.fromstring(page.text)
-        sources = tree.xpath('//a/@href')
-        for source in sources:
-            if "youtube.com" in source:
-                parsed = urlparse(str(source))
-                output.add(source)
-    except html.etree.ParserError:
-        pass
-    return output
-    
-
-def get_sub_pages(mainaddress, domain, allowed_paths):
-    """get address of all links from address along allowed paths, in domain"""
-    page = requests.get(mainaddress, allow_redirects=False)
-    tree = html.fromstring(page.text)
-    links = tree.xpath('//attribute::href')
-    output = []
-    for link in links:
-        parsed = urlparse(link)
-        path = parsed.path.split('/')
-        if (parsed.netloc == domain and len(path) >1 and path[1] in allowed_paths):
-            output.append(link)
-    return output
-
-def get_rss_links(mainaddress):
-    if hasattr(ssl, '_create_unverified_context'):
-        ssl._create_default_https_context = ssl._create_unverified_context
-    dd = feedparser.parse(mainaddress)
-    output = []
-    for d in dd.entries: 
-        output.append(d.link)
-    return output
-
-def catch_em_all(source):
-	links = []
-	if source.rssable:
-		links += source.get_rss_links()
-	if source.name == 'Stereogum':
-	    links += get_sub_pages('http://www.stereogum.com','www.stereogum.com',[str(x) for x in range(1920000, 1930000)])
-	if source.name == 'Slate':
-	    links += get_sub_pages('http://www.slate.com','www.slate.com',['articles', 'blogs'])
-	#if source.name == 'Noisey':
-	#	noisey = Source.objects.get(name='Noisey')
-	#	links = noisey.get_rss_links()
-	youtubes = []
-	for link in links:
-	    youtubes += find_youtubes(link)
-	distinct = set()
-	for youtube in youtubes:
-	    if source.name.lower() not in youtube:    #make sure we're not adding its own channel
-	        distinct.add(youtube)
-	return distinct
-
 def process_feed(request,group):
 	sources = Source.objects.filter(group__name=group)
 	for s in sources:
 		tubes = []
-		tubes += catch_em_all(s)
+		tubes += s.catch_em_all()
 		RawPost.create_batch(tubes,s)
 		messages.success(request, 'Processed {}'.format(s.name))
 	return redirect('post_list')   
