@@ -116,7 +116,7 @@ class RawPost(models.Model):
 				newRaw = RawPost(
 					author = source.author,
 					source = source,
-					link = link.lower())
+					link = link)
 				newRaw.save()
 
 class ScoredPost(models.Model):
