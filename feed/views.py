@@ -29,8 +29,19 @@ def post_list(request):
 		pagePosts = paginator.page(paginator.num_pages)
 	return render(request, 'feed/post_list.html', {'posts': pagePosts})
 
+def post_filtered(request, group):
+	posts = Post.objects.filter(sources__group__name=group).order_by('-created_date')
+	paginator = Paginator(posts, 9)
+	page = request.GET.get('page',1)
+	try:
+		pagePosts = paginator.page(page)
+	except PageNotAnInteger:
+		pagePosts = paginator.page(1)
+	except EmptyPage:
+		pagePosts = paginator.page(paginator.num_pages)
+	return render(request, 'feed/post_list.html', {'posts': pagePosts})
+
 def refresh_posts(request):
-	#processFeeds()
 	scorePosts(1)
 	makePosts(1)
 	#posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
@@ -129,32 +140,32 @@ def get_rss_links(mainaddress):
     return output
 
 def catch_em_all(source):
-    if source == 'stereogum':
-        links = get_sub_pages('http://www.stereogum.com','www.stereogum.com',[str(x) for x in range(1920000, 1930000)])
-    if source == 'slate':
-        links = get_sub_pages('http://www.slate.com','www.slate.com',['articles', 'blogs'])
-    if source == 'noisey':
-        links = get_rss_links('http://noisey.vice.com/en_ca/rss')  
-    youtubes = []
-    for link in links:
-        youtubes += find_youtubes(link)
-    distinct = set()
-    for youtube in youtubes:
-        if source not in youtube:    #make sure we're not adding its own channel
-            distinct.add(youtube)
-    return distinct
+	links = []
+	if source.rssable:
+		links += source.get_rss_links()
+	if source.name == 'Stereogum':
+	    links += get_sub_pages('http://www.stereogum.com','www.stereogum.com',[str(x) for x in range(1920000, 1930000)])
+	if source.name == 'Slate':
+	    links += get_sub_pages('http://www.slate.com','www.slate.com',['articles', 'blogs'])
+	#if source.name == 'Noisey':
+	#	noisey = Source.objects.get(name='Noisey')
+	#	links = noisey.get_rss_links()
+	youtubes = []
+	for link in links:
+	    youtubes += find_youtubes(link)
+	distinct = set()
+	for youtube in youtubes:
+	    if source.name.lower() not in youtube:    #make sure we're not adding its own channel
+	        distinct.add(youtube)
+	return distinct
 
-def process_feed(request):
-	noisey = []
-	slate = []
-	stereogum = []
-	noisey += catch_em_all('noisey')
-	slate += catch_em_all('slate')
-	stereogum += catch_em_all('stereogum')  
-	RawPost.create_batch(noisey,'Noisey')
-	RawPost.create_batch(slate,'Slate')
-	RawPost.create_batch(stereogum,'Stereogum')   
-	messages.success(request, 'Feeds processed!')
+def process_feed(request,group):
+	sources = Source.objects.filter(group__name=group)
+	for s in sources:
+		tubes = []
+		tubes += catch_em_all(s)
+		RawPost.create_batch(tubes,s)
+		messages.success(request, 'Processed {}'.format(s.name))
 	return redirect('post_list')   
 
 

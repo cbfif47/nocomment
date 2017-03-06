@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+import feedparser
+import ssl 
 
 class Post(models.Model):
 	author = models.ForeignKey('auth.User')
@@ -35,9 +37,27 @@ class Source(models.Model):
 	rss = models.URLField()
 	name = models.TextField(default='New Source')
 	score = models.IntegerField(default=0)
+	group = models.ForeignKey('SourceGroup')
+	rssable = models.BooleanField(default=False)
 
 	def __str__(self):
 		return self.name
+
+	def get_rss_links(self):
+	    if hasattr(ssl, '_create_unverified_context'):
+	        ssl._create_default_https_context = ssl._create_unverified_context
+	    dd = feedparser.parse(self.rss)
+	    output = []
+	    for d in dd.entries: 
+	        output.append(d.link)
+	    return output
+
+class SourceGroup(models.Model):
+	name = models.TextField(default='New Group')
+
+	def __str__(self):
+		return self.name
+
 
 
 
@@ -53,13 +73,12 @@ class RawPost(models.Model):
 		return self.link[24:]
 
 	def create_batch(links,source):
-		linksource = Source.objects.get(name=source)
 		for link in links:
-			existing = RawPost.objects.filter(link=link, source=linksource)
+			existing = RawPost.objects.filter(link=link, source=source)
 			if not existing:
 				newRaw = RawPost(
-					author = linksource.author,
-					source = linksource,
+					author = source.author,
+					source = source,
 					link = link)
 				newRaw.save()
 

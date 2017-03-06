@@ -4,7 +4,14 @@
 <br>
 <div class="row refresher">
 	<a href="{% url 'refresh_posts' %}"><button type="button" class="btn btn-outline-primary">Refresh Posts</button></a>
-	<a href="{% url 'process_feed' %}"><button type="button" class="btn btn-outline-warning">Process Feed</button></a>
+		<a href="{% url 'process_feed' group='music' %}"><button type="button" class="btn btn-outline-warning">Process Music</button></a>
+	<a href="{% url 'process_feed' group='news' %}"><button type="button" class="btn btn-outline-warning">Process News</button></a>
+</div>
+<div class="row">
+	<div class="btn-group" role="group" aria-label="Basic example">
+  		<button type="button" class="btn btn-secondary"><a href="{% url 'post_filtered' group='news' %}">News</a></button>
+  		<button type="button" class="btn btn-secondary"><a href="{% url 'post_filtered' group='music' %}">Music</a></button>
+	</div>
 </div>
 
 <div class="row no-gutters">
