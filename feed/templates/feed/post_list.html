@@ -18,7 +18,7 @@
 	{% load embed_video_tags %}
 	{% for post in posts %}
 		<div class="col-sm-4">
-			{% ifequal post.postType 'Video' %}
+			{% ifequal post.post_type 'Video' %}
 				{% video post.link as my_video %}
 					{% video my_video "100% x 50%"  %}
 				{% endvideo %}

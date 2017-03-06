@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 import feedparser
 import ssl 
 from urllib.parse import urlparse
@@ -10,11 +11,11 @@ import sys
 from .getvideos import find_youtubes
 
 class Post(models.Model):
-	author = models.ForeignKey('auth.User')
+	user = models.ForeignKey('auth.User')
 	link = models.URLField()
 	liked = models.BooleanField(default=False)
 	disliked = models.BooleanField(default=False)
-	postType = models.TextField(default='Video')
+	post_type = models.TextField(default='Video')
 	sources = models.ManyToManyField('source')
 	created_date = models.DateTimeField(
 		default=timezone.now)
@@ -27,19 +28,19 @@ class Post(models.Model):
 		existing = Post.objects.filter(link=p.link)
 		if not existing:
 			#make a list of the post sources, so we can add it later
-			postSources = list(s.id for s in p.sources.all())
-			newPost = Post(
-				author = p.author,
+			post_sources = list(s.id for s in p.sources.all())
+			new_post = Post(
+				user = p.user,
 				link = p.link,
-				postType = 'Video',
+				post_type = 'Video',
 				created_date = p.created_date
 				)
-			newPost.save()
+			new_post.save()
 			#add the sources
-			newPost.sources.add(*postSources)
+			new_post.sources.add(*post_sources)
+
 
 class Source(models.Model):
-	author = models.ForeignKey('auth.User')
 	rss = models.URLField()
 	name = models.TextField(default='New Source')
 	score = models.IntegerField(default=0)
@@ -96,13 +97,11 @@ class SourceGroup(models.Model):
 		return self.name
 
 
-
-
 class RawPost(models.Model):
-	author = models.ForeignKey('auth.User')
+	user = models.ForeignKey('auth.User')
 	source = models.ForeignKey('source')
 	link = models.URLField()
-	postType = models.TextField(default='Video')
+	post_type = models.TextField(default='Video')
 	created_date = models.DateTimeField(
 		default=timezone.now)
 
@@ -114,21 +113,20 @@ class RawPost(models.Model):
 			existing = RawPost.objects.filter(link=link.lower(), source=source)
 			if not existing:
 				newRaw = RawPost(
-					author = source.author,
+					user = User.objects.get(id=1),  #change this when we have users
 					source = source,
 					link = link)
 				newRaw.save()
 
+
 class ScoredPost(models.Model):
-	author = models.ForeignKey('auth.User')
+	user = models.ForeignKey('auth.User')
 	sources = models.ManyToManyField('source')
 	link = models.URLField()
-	postType = models.TextField(default='Video')
+	post_type = models.TextField(default='Video')
 	score = models.IntegerField(default=0)
 	created_date = models.DateTimeField(
 		default=timezone.now)
 
 	def __str__(self):
 		return self.link	[24:]	
-	
-

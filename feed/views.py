@@ -7,14 +7,6 @@ from .forms import PostLike
 from django.contrib import messages
 from django.core.paginator import Paginator
 
-#these are for scraping
-from lxml import html
-from urllib.parse import urlparse
-import requests
-import shelve
-import sys
-import feedparser
-import ssl 
 
 # Create your views here.
 def post_list(request):
@@ -22,69 +14,68 @@ def post_list(request):
 	paginator = Paginator(posts, 9)
 	page = request.GET.get('page',1)
 	try:
-		pagePosts = paginator.page(page)
+		page_posts = paginator.page(page)
 	except PageNotAnInteger:
-		pagePosts = paginator.page(1)
+		page_posts = paginator.page(1)
 	except EmptyPage:
-		pagePosts = paginator.page(paginator.num_pages)
-	return render(request, 'feed/post_list.html', {'posts': pagePosts})
+		page_posts = paginator.page(paginator.num_pages)
+	return render(request, 'feed/post_list.html', {'posts': page_posts})
 
 def post_filtered(request, group):
 	posts = Post.objects.filter(sources__group__name=group).order_by('-created_date')
 	paginator = Paginator(posts, 9)
 	page = request.GET.get('page',1)
 	try:
-		pagePosts = paginator.page(page)
+		page_posts = paginator.page(page)
 	except PageNotAnInteger:
-		pagePosts = paginator.page(1)
+		page_posts = paginator.page(1)
 	except EmptyPage:
-		pagePosts = paginator.page(paginator.num_pages)
-	return render(request, 'feed/post_list.html', {'posts': pagePosts})
+		page_posts = paginator.page(paginator.num_pages)
+	return render(request, 'feed/post_list.html', {'posts': page_posts})
 
 def refresh_posts(request):
-	scorePosts(1)
-	makePosts(1)
+	score_posts(1)
+	make_posts(1)
 	#posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
 	messages.success(request, 'Posts refreshed!')
 	return redirect('post_list')
 
-def scorePosts(user):
+def score_posts(user):
 	yesterday = timezone.now().date() - timedelta(1)
-	rawPosts = RawPost.objects.all()  #need to maybe just make it yesterday, not today
-	for rawPost in rawPosts:
+	raw_posts = RawPost.objects.all()  #need to maybe just make it yesterday, not today
+	for raw_post in raw_posts:
 		try:
 			#if we're already scoring it, increment the existing score
-			existing = ScoredPost.objects.get(link=rawPost.link)
-			if rawPost.source not in existing.sources.all():    #if we've already got it, just ignore
-				existing.score += rawPost.source.score
-				existing.sources.add(rawPost.source.id)  #add the source
+			existing = ScoredPost.objects.get(link=raw_post.link)
+			if raw_post.source not in existing.sources.all():    #if we've already got it, just ignore
+				existing.score += raw_post.source.score
+				existing.sources.add(raw_post.source.id)  #add the source
 				existing.save()
 		except ScoredPost.DoesNotExist:
 			#otherwise make a new scoredPost and increment the score
-			newScoredPost = ScoredPost(
-				author = rawPost.author,
-				link = rawPost.link,
-				postType = rawPost.postType,
-				score = rawPost.source.score,
-				created_date = rawPost.created_date
+			new_scored_post = ScoredPost(
+				user = raw_post.user,
+				link = raw_post.link,
+				post_type = raw_post.post_type,
+				score = raw_post.source.score,
+				created_date = raw_post.created_date
 				)
-			newScoredPost.save()
+			new_scored_post.save()
 			#add the source relationship after saving the scoredPost
-			newScoredPost.sources.add(rawPost.source.id)
-			newScoredPost.save()
+			new_scored_post.sources.add(raw_post.source.id)
+			new_scored_post.save()
 
-
-def makePosts(user):
+def make_posts(user):
 	#look at our sources right now to determine the threshold
 	sources = Source.objects.all()
-	totalScore = sources.aggregate(Sum('score'))['score__sum']  #it makes a dict, gotta access the value
-	sourceCount = sources.count()
-	threshold = totalScore/sourceCount
+	total_score = sources.aggregate(Sum('score'))['score__sum']  #it makes a dict, gotta access the value
+	source_count = sources.count()
+	threshold = total_score/source_count
 	yesterday = timezone.now().date() - timedelta(1)
 
 	#grab posts that meet the threshold
-	scoredPosts = ScoredPost.objects.filter(score__gte=threshold)
-	for p in scoredPosts:
+	scored_posts = ScoredPost.objects.filter(score__gte=threshold)
+	for p in scored_posts:
 		Post.create(p)
 
 def post_like(request, pk):
