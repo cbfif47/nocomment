@@ -6,9 +6,14 @@ from .models import Post, RawPost, Source, ScoredPost
 from .forms import PostLike
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
+def logout_view(request):
+    logout(request)
+    return redirect('post_filtered', 'music')
 
-# Create your views here.
+@login_required
 def post_list(request):
 	posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
 	paginator = Paginator(posts, 9)
@@ -21,6 +26,7 @@ def post_list(request):
 		page_posts = paginator.page(paginator.num_pages)
 	return render(request, 'feed/post_list.html', {'posts': page_posts})
 
+@login_required
 def post_filtered(request, group):
 	posts = Post.objects.filter(sources__group__name=group).order_by('-created_date')
 	paginator = Paginator(posts, 9)
@@ -33,12 +39,14 @@ def post_filtered(request, group):
 		page_posts = paginator.page(paginator.num_pages)
 	return render(request, 'feed/post_list.html', {'posts': page_posts})
 
+@login_required
 def refresh_posts(request):
 	score_posts(1)
 	make_posts(1)
 	#posts = Post.objects.filter(created_date__lte=timezone.now()).order_by('-created_date')
 	messages.success(request, 'Posts refreshed!')
 	return redirect('post_list')
+
 
 def score_posts(user):
 	yesterday = timezone.now().date() - timedelta(1)
@@ -65,6 +73,7 @@ def score_posts(user):
 			new_scored_post.sources.add(raw_post.source.id)
 			new_scored_post.save()
 
+
 def make_posts(user):
 	#look at our sources right now to determine the threshold
 	sources = Source.objects.all()
@@ -78,6 +87,7 @@ def make_posts(user):
 	for p in scored_posts:
 		Post.create(p)
 
+@login_required
 def post_like(request, pk):
 	post = Post.objects.get(pk=pk)
 	if request.method == "POST":
@@ -89,7 +99,7 @@ def post_like(request, pk):
 	form = PostLike(instance=post)
 	return render(request, 'feed/post_detail.html', {'post':post, 'form':form})
 
-
+@login_required
 def process_feed(request,group):
 	sources = Source.objects.filter(group__name=group)
 	for s in sources:

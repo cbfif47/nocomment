@@ -2,6 +2,7 @@
 
 {% block content %}
 <br>
+<a href="{% url 'logout' %}">LOGOUT</a>
 <div class="row refresher">
 	<a href="{% url 'refresh_posts' %}"><button type="button" class="btn btn-outline-primary">Refresh Posts</button></a>
 		<a href="{% url 'process_feed' group='music' %}"><button type="button" class="btn btn-outline-warning">Process Music</button></a>
